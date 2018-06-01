@@ -11,3 +11,4 @@
 .DS_Store
 /src/main/scripts/scratch.sh
 /src/main/packer/build.sh
+/src/main/packer/jumpbox_build.sh

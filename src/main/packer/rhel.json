@@ -1,0 +1,60 @@
+{
+  "variables": {
+    "tenant_id": "",
+    "subscription_id": "",
+    "client_id": "",
+    "client_secret": "",
+    "ssh_password": "",
+    "managed_image_name": "",
+    "app_binary_name": ""
+  },
+  "builders": [
+    {
+      "type": "azure-arm",
+      "client_id": "{{user `client_id`}}",
+      "client_secret": "{{user `client_secret`}}",
+      "tenant_id": "{{user `tenant_id`}}",
+      "subscription_id": "{{user `subscription_id`}}",
+      "managed_image_resource_group_name": "HelloCloud",
+      "managed_image_name": "{{user `managed_image_name`}}",
+      "os_type": "Linux",
+      "image_publisher": "RedHat",
+      "image_offer": "RHEL",
+      "image_sku": "7.3",
+      "image_version": "latest",
+      "ssh_pty": "true",
+      "ssh_username": "azureuser",
+      "ssh_password": "{{user `ssh_password`}}",
+      "azure_tags": {
+        "dept": "HelloCloud",
+        "task": "Image deployment"
+      },
+      "location": "East US",
+      "vm_size": "Standard_DS2_v2"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "file",
+      "source": "./bin/",
+      "destination": "/tmp"
+    },
+    {
+      "execute_command": "echo '{{user `ssh_pass`}}' | {{ .Vars }} sudo -S -E sh '{{ .Path }}'",
+      "inline": [
+        "mkdir -p /opt/webapp",
+        "mv /tmp/start_server.sh /opt/webapp",
+        "mv /tmp/{{user `app_binary_name`}} /opt/webapp/app.jar",
+        "chmod +x /opt/webapp/start_server.sh",
+        "yum upgrade -y",
+        "yum -y install java-1.8.0-openjdk",
+        "firewall-cmd --zone=public --add-port=80/tcp --permanent",
+        "firewall-cmd --reload",
+        "/usr/sbin/waagent -force -deprovision+user && export HISTSIZE=0 && sync"
+      ],
+      "inline_shebang": "/bin/sh -x",
+      "type": "shell",
+      "skip_clean": true
+    }
+  ]
+}
